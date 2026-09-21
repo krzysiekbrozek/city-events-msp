@@ -1,1 +1,98 @@
-git
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wydarzenia w Mieście</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen p-8">
+    <div class="max-w-4xl mx-auto">
+        <!-- Nagłówek -->
+        <header class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">Wydarzenia w Mieście</h1>
+                <p class="text-gray-600">Agregat najważniejszych wydarzeń z Twojego rejonu</p>
+            </div>
+            <span id="event-count" class="bg-blue-100 text-blue-800 text-sm font-semibold px-3 py-1 rounded-full">
+                Ładowanie...
+            </span>
+        </header>
+
+        <!-- Wyszukiwarka -->
+        <div class="mb-6">
+            <input
+                type="text"
+                id="search-input"
+                placeholder="🔍 Szukaj wydarzenia po tytule lub słowie kluczowym..."
+                class="w-full p-3 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+            >
+        </div>
+
+        <!-- Lista wydarzeń -->
+        <main id="events-list" class="space-y-4">
+            <div class="text-center py-12 text-gray-500">Pobieranie wydarzeń...</div>
+        </main>
+    </div>
+
+    <script>
+        let allEvents = []; // Przechowuje pełną listę wydarzeń z API
+
+        async function fetchEvents() {
+            try {
+                const response = await fetch('http://127.0.0.1:8000/events');
+                const result = await response.json();
+
+                allEvents = result.data;
+                renderEvents(allEvents);
+            } catch (error) {
+                console.error('Błąd pobierania danych:', error);
+                document.getElementById('events-list').innerHTML =
+                    '<div class="bg-red-50 text-red-700 p-4 rounded-lg text-center">Nie udało się połączyć z API (upewnij się, że serwer uvicorn działa pod adresem 127.0.0.1:8000).</div>';
+            }
+        }
+
+        function renderEvents(eventsToDisplay) {
+            const countBadge = document.getElementById('event-count');
+            const container = document.getElementById('events-list');
+
+            countBadge.textContent = `Wyświetlono: ${eventsToDisplay.length} z ${allEvents.length}`;
+            container.innerHTML = '';
+
+            if (eventsToDisplay.length === 0) {
+                container.innerHTML = '<p class="text-center text-gray-500 py-8 bg-white rounded-lg border border-gray-200">Brak wydarzeń spełniających kryteria wyszukiwania.</p>';
+                return;
+            }
+
+            eventsToDisplay.forEach(event => {
+                const card = document.createElement('div');
+                card.className = 'bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition';
+                card.innerHTML = `
+                    <div class="flex justify-between items-start gap-4">
+                        <h2 class="text-lg font-semibold text-gray-900">${event.title}</h2>
+                        <span class="text-xs text-gray-500 whitespace-nowrap bg-gray-50 px-2 py-1 rounded">${event.published}</span>
+                    </div>
+                    <div class="mt-4">
+                        <a href="${event.link}" target="_blank" class="inline-flex items-center text-sm font-medium text-blue-600 hover:underline">
+                            Zobacz źródło &rarr;
+                        </a>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Filtrowanie w czasie rzeczywistym na podstawie wpisywanego tekstu
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase().trim();
+            const filteredEvents = allEvents.filter(event =>
+                event.title.toLowerCase().includes(searchTerm)
+            );
+            renderEvents(filteredEvents);
+        });
+
+        // Pobierz dane po załadowaniu strony
+        fetchEvents();
+    </script>
+</body>
+</html>

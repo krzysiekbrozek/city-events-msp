@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Baza danych
+*.db
+*.sqlite3
+
+# Środowisko / Sekrety
+.env
+
+# Node / Frontend
+node_modules/
+.next/
+dist/
